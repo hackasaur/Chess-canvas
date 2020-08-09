@@ -15,7 +15,17 @@
 // KNIGHT: can move to squares that are horizontally or vertcally 2 squares away
 // and 1 square adjacent to that square.
 
+//disambiguation moves
+
 alphabetOrder = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+PieceLetters  = {
+  'K' : 'King',
+  'Q' : 'Queen',
+  'R' : 'Rook',
+  'B' : 'Bishop',
+  'N' : 'Knight',
+}
 
 ncol = 8
 nrow = 8
@@ -74,10 +84,72 @@ function isBoardAndPositionLegit(board, position){
 //{{{
 function canMove2(board, position, coordinate){
   /*returns array of squares to which the piece on specified square can move to*/
-  //for pawn
-  for(piecePosition of position){
-    let pieceCoordinate = (piecePosition.length === 2) ? piecePosition : piecePosition.slice(1,)
+
+  //identify piece type at the 'coordinate'
+  for(piecePosition of position.white){
+    if(piecePosition.slice(-2,) === coordinate){
+      console.log("match found")
+      if(piecePosition.length === 2){
+        pieceType = 'wP'
+        break
+      }
+      else{
+        if(piecePosition[0] === 'K'){
+          pieceType = 'wK'
+          break
+        }
+        else if(piecePosition[0] === 'Q'){
+          pieceType = 'wQ'
+          break
+        }
+        else if(piecePosition[0] === 'R'){
+          pieceType = 'wR'
+          break
+        }
+        else if(piecePosition[0] === 'N'){
+          pieceType = 'wN'
+          break
+        }
+        else if(piecePosition[0] === 'B'){
+          pieceType = 'wB'
+          break
+        }
+      }
+    }
   }
+  for(piecePosition of position.black){
+    if(piecePosition.slice(-2,) === coordinate){
+      console.log("match found")
+      if(piecePosition.length === 2){
+        pieceType = 'bP'
+        break
+      }
+      else{
+        if(piecePosition[0] === 'K'){
+          pieceType = 'bK'
+          break
+        }
+        else if(piecePosition[0] === 'Q'){
+          pieceType = 'bQ'
+          break
+        }
+        else if(piecePosition[0] === 'R'){
+          pieceType = 'bR'
+          break
+        }
+        else if(piecePosition[0] === 'N'){
+          pieceType = 'bN'
+          break
+        }
+        else if(piecePosition[0] === 'B'){
+          pieceType = 'bB'
+          break
+        }
+      }
+    }
+  }
+
+  //for pawn
 }
 //}}}
 
@@ -89,5 +161,5 @@ startingPosition = {
   black: ['Ke8', 'Qd8']
 }
 
-isBoardAndPositionLegit(board, StartingPosition)
-
+isBoardAndPositionLegit(board, startingPosition)
+canMove2(board, startingPosition, 'd8')
