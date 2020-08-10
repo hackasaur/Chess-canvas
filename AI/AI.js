@@ -29,9 +29,9 @@ PieceLetters  = {
 
 ncol = 8
 nrow = 8
-//{{{
 function rectBoardCoordinates(ncol, nrow){
-  /*returns an array containing all the coordinates of the board*/
+//{{{
+ /*returns an array containing all the coordinates of the board*/
   let row=[]
   let board = []
   for(let j=1; j<=nrow; j++){
@@ -43,19 +43,19 @@ function rectBoardCoordinates(ncol, nrow){
     row = []
   }
   return board
-}
+
 //}}}
 
-//{{{
 function isBoardAndPositionLegit(board, position){
-  /*checks whether:
+ //{{{
+ /*checks whether:
    * square in `position` exists on the board
    * there are duplicate values in the position or board*/
 
   let positionAll = position.white.concat(position.black)
   let legit = false
 
-  for(piecePosition of positionAll){
+  for(let piecePosition of positionAll){
     let pieceCoordinate = (piecePosition.length === 2) ? piecePosition : piecePosition.slice(1,) //since first letter is piece name exception pawns
 
     legit = false
@@ -66,12 +66,10 @@ function isBoardAndPositionLegit(board, position){
           break
         }
       }
-      console.log(legit)
       if(legit === true){
         break
       }
     }
-    console.log(legit)
     if(legit === false){
       console.log(`no such sqaure as: ${pieceCoordinate}`)
       break
@@ -81,14 +79,15 @@ function isBoardAndPositionLegit(board, position){
 }
 //}}}
 
-//{{{
 function canMove2(board, position, coordinate){
-  /*returns array of squares to which the piece on specified square can move to*/
+ //{{{
+ /*returns array of squares to which the piece on specified square can move to*/
 
+  let moves = []
+  let pieceType
   //identify piece type at the 'coordinate'
-  for(piecePosition of position.white){
+  for(let piecePosition of position.white){
     if(piecePosition.slice(-2,) === coordinate){
-      console.log("match found")
       if(piecePosition.length === 2){
         pieceType = 'wP'
         break
@@ -117,9 +116,9 @@ function canMove2(board, position, coordinate){
       }
     }
   }
-  for(piecePosition of position.black){
+
+  for(let piecePosition of position.black){
     if(piecePosition.slice(-2,) === coordinate){
-      console.log("match found")
       if(piecePosition.length === 2){
         pieceType = 'bP'
         break
@@ -150,16 +149,76 @@ function canMove2(board, position, coordinate){
   }
 
   //for pawn
+  if(pieceType === 'wP'){
+
+    //check if pawn can move 1 step forward
+    let frontSquare = `${coordinate[0]}${parseInt(coordinate[1]) + 1}`
+    let positionAll = position.white.concat(position.black)
+    let occupied = false
+    for(let piecePosition of positionAll){
+      if(piecePosition.slice(-2,) === frontSquare){
+        console.log("there is a piece in front of the pawn")
+        inFront = true
+        break
+      }
+    }
+    if(occupied === false){
+      moves.push(frontSquare)
+    }
+
+    //check if pawn can capture 1 step right diagonally
+    let rightFile
+    let letterAt = -1
+    for(let i=0; i < alphabetOrder.length; i++){
+      if(coordinate[0] === alphabetOrder[i]){
+        letterAt = i
+      }
+    }
+    rightFile = alphabetOrder[letterAt+1]
+    let rightDiagnolSquare = `${rightFile}${parseInt(coordinate[1]) + 1}`
+    occupied = false
+    for(let piecePosition of position.black){ //i.e there is a black piece diagnolly 1 square to the right of the pawn
+      if(piecePosition.slice(-2,) === rightDiagnolSquare){
+        occupied = true
+        break
+      }
+
+    }
+    if(occupied === true){
+      moves.push(rightDiagnolSquare)
+    }
+
+    let leftFile
+    letterAt = -1
+    for(let i=0; i < alphabetOrder.length; i++){
+      if(coordinate[0] === alphabetOrder[i]){
+        letterAt = i
+      }
+    }
+    leftFile = alphabetOrder[letterAt-1]
+    let leftDiagnolSquare = `${leftFile}${parseInt(coordinate[1]) + 1}`
+    occupied = false
+    for(let piecePosition of position.black){ //i.e there is a black piece diagnolly 1 square to the right of the pawn
+      if(piecePosition.slice(-2,) === leftDiagnolSquare){
+        occupied = true
+        break
+      }
+
+    }
+    if(occupied === true){
+      moves.push(leftDiagnolSquare)
+    }
+return moves
+  }
 }
 //}}}
-
 
 board = rectBoardCoordinates(7,8)
 //console.log(board)
 startingPosition = {
-  white: ['Ke1','Qd1'],
-  black: ['Ke8', 'Qd8']
+  white: ['Ke1','Qd1', 'e2'],
+  black: ['Ke8', 'Qd8', 'f3', 'd3']
 }
 
 isBoardAndPositionLegit(board, startingPosition)
-canMove2(board, startingPosition, 'd8')
+console.log(canMove2(board, startingPosition, 'e2'))
