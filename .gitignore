@@ -1,7 +1,6 @@
 node_modules/
 package-lock.json
 package.json
-test.js
 works.js
-
-
+test.js
+.eslintrc.json
