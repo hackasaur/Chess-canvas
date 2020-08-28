@@ -12,7 +12,7 @@ moveSound.src = './sounds/Lichess/standard/Move.mp3'
 let mouseX = 0
 let mouseY = 0
 
-//game
+//game variables
 let grabbed = {
   value: false, 
   piecePosition:[],
@@ -57,6 +57,41 @@ const createHub = () => {
   }
   //}}}
   return {subscribe, unsubscribe, publish}
+}
+
+function grabbedIsTrue(ctx, boardProps, position, grabbed){
+  /*draws game when grabbed is set to true*/
+  //{{{
+  loop = setInterval(()=>{
+    drawRectGame(ctx, boardProps, position, grabbed)
+  })
+  //}}}
+}
+
+function grabbedIsFalse(ctx, boardProps, position, grabbed){
+  /*draws game when grabbed is set to false*/
+  //{{{
+  //update position here using nearestSquareCoordinates
+  let boardSquare = whichSquareFromCoordinates(boardProps, mouseX, mouseY)
+  if(lastSelectedPiece.piecePosition.length === 2){
+    if(lastSelectedPiece.color === "white"){
+      position.white.push(`${boardSquare.file}${boardSquare.rank}`)
+    }
+    else if(lastSelectedPiece.color === "black"){
+      position.black.push(`${boardSquare.file}${boardSquare.rank}`)
+    }
+  }
+  else{
+    let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${boardSquare.file}${boardSquare.rank}`
+    if(lastSelectedPiece.color === "white"){
+      position.white.push(newPiecePosition)
+    }
+    else{
+      position.black.push(newPiecePosition)
+    }
+  }
+  drawRectGame(ctx, boardProps, position, grabbed)
+  //}}}
 }
 
 function whichSquareFromCoordinates(boardProps, x, y){
@@ -117,34 +152,12 @@ function setGrabbed(value, selectedPiece = null){
     grabbed = {value:value}
   }
   if(grabbed.value){//grabbed set true from false TODO *pubsub needed here
-    //exclude grabbed piece from position
-    loop = setInterval(()=>{
-      drawRectGame(ctx, boardProps, position, grabbed)
-    })
+    grabbedIsTrue(ctx, boardProps, position, grabbed)
     lastSelectedPiece = selectedPiece
   }
   else{//grabbed set false from true
-    let boardSquare = whichSquareFromCoordinates(boardProps, mouseX, mouseY)
-    if(lastSelectedPiece.piecePosition.length === 2){
-      if(lastSelectedPiece.color === "white"){
-        position.white.push(`${boardSquare.file}${boardSquare.rank}`)
-      }
-      else if(lastSelectedPiece.color === "black"){
-        position.black.push(`${boardSquare.file}${boardSquare.rank}`)
-      }
-    }
-    else{
-      let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${boardSquare.file}${boardSquare.rank}`
-      if(lastSelectedPiece.color === "white"){
-        position.white.push(newPiecePosition)
-      }
-      else{
-        position.black.push(newPiecePosition)
-      }
-    }
     clearInterval(loop)
-    //update position here using nearestSquareCoordinates
-    drawRectGame(ctx, boardProps, position, grabbed)
+    grabbedIsFalse(ctx, boardProps,position, grabbed)
   }
 }
 
