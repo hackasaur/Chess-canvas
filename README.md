@@ -1,4 +1,4 @@
-# Chess(Work in progress)
+# Chess-canvas(Work in progress)
 Building a chess game from scratch in Javascript.
 
 ### TODO:
