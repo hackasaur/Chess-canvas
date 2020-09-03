@@ -1,9 +1,15 @@
+//TODO: chess should work even for arima like board
+
 import { drawPieces, algebraic2cartesian} from './pieces.js'
-import {drawCheckeredBoard, displayFileAndRank, boardProps, alphabetOrder} from './board.js'
+import {drawCheckeredBoard, displayFileAndRank, alphabetOrder} from './board.js'
+import {boardProps, piecesProps} from './boardConfig.js'
+import {canMove2, rectBoardSquares} from './rules.js'
 
-const board = document.getElementById("board")
-const ctx = board.getContext("2d")
-
+document.getElementById("board").style.cursor = "pointer"; //change cursor shape when inside board
+const boardCanvas = document.getElementById("board")
+const ctx = boardCanvas.getContext("2d")
+//ctx.canvas.width = window.innerWidth
+//ctx.canvas.height = window.innerHeight
 //sounds
 const moveSound = new Audio()
 moveSound.src = './sounds/Lichess/standard/Move.mp3'
@@ -18,18 +24,17 @@ let grabbed = {
   piecePosition:[],
   color: ""
 }
-
 let loop
+let board = rectBoardSquares(boardProps.cols, boardProps.rows)
 let startingPosition = {
   white: ['Ke1','Qd1','Ra1','Rh1','Nb1','Ng1','Bc1','Bf1','a2','b2','c2','d2','e2','f2','g2','h2'],
   black: ['Ke8','Qd8','Ra8','Rh8','Nb8','Ng8','Bc8','Bf8','a7','b7','c7','d7','e7','f7','g7','h7']
 }
-
 let position = startingPosition
 let lastSelectedPiece = {}
+
 //pubSub
 const createHub = () => {
-  //{{{
   const events = {
   }
 
@@ -55,49 +60,55 @@ const createHub = () => {
       })
     }
   }
-  //}}}
   return {subscribe, unsubscribe, publish}
 }
 
-function grabbedIsTrue(ctx, boardProps, position, grabbed){
+function grabbedIsTrue(ctx, board, boardProps, position, grabbed){
   /*draws game when grabbed is set to true*/
-  //{{{
   loop = setInterval(()=>{
     drawRectGame(ctx, boardProps, position, grabbed)
   })
-  //}}}
 }
 
-function grabbedIsFalse(ctx, boardProps, position, grabbed){
+function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
   /*draws game when grabbed is set to false*/
-  //{{{
-  //update position here using nearestSquareCoordinates
+
   let boardSquare = whichSquareFromCoordinates(boardProps, mouseX, mouseY)
-  if(lastSelectedPiece.piecePosition.length === 2){
-    if(lastSelectedPiece.color === "white"){
-      position.white.push(`${boardSquare.file}${boardSquare.rank}`)
+  let newSquare = `${boardSquare.file}${boardSquare.rank}`
+
+  //push lastSelectedPiece's piecePosition in `position` for canMove2
+  position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition)
+
+  //check if the piece can move to newSquare
+  if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){
+    //for pawn
+    if(lastSelectedPiece.piecePosition.length === 2){
+      position[lastSelectedPiece.color].push(newSquare)
     }
-    else if(lastSelectedPiece.color === "black"){
-      position.black.push(`${boardSquare.file}${boardSquare.rank}`)
+    //for non-pawn pieces
+    else if(lastSelectedPiece.piecePosition.length === 3){
+      let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${newSquare}`
+      position[lastSelectedPiece.color].push(newPiecePosition)
     }
+    let index = position[lastSelectedPiece.color].indexOf(lastSelectedPiece.piecePosition)
+    position[lastSelectedPiece.color].splice(index, 1)
   }
+
   else{
-    let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${boardSquare.file}${boardSquare.rank}`
-    if(lastSelectedPiece.color === "white"){
-      position.white.push(newPiecePosition)
+    if(lastSelectedPiece.piecePosition.length === 2){
+      position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition)
     }
-    else{
-      position.black.push(newPiecePosition)
+    //for non-pawn pieces
+    else if(lastSelectedPiece.length === 3){
+      position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition.slice(-2,))
     }
   }
   drawRectGame(ctx, boardProps, position, grabbed)
-  //}}}
 }
 
 function whichSquareFromCoordinates(boardProps, x, y){
   //returns the file and rank of the nearest square from the given coordinates 
   //e.g 200, 300 it may return {file: 'b', rank : 4}
-  //{{{
   let squareSize = boardProps.squareSize
   let originX = boardProps.originX
   let originY = boardProps.originY
@@ -106,17 +117,15 @@ function whichSquareFromCoordinates(boardProps, x, y){
   let row = boardProps.rows - Math.floor((y - originY)/squareSize)
   let rank = row
   let file = alphabetOrder[col]
-  //}}}
   return {
     file: file,
     rank: rank
   }
 }
 
-function XYOnWhichPieceSquare(boardProps, x, y, position){
+function XYOnWhichPieceSquare(boardProps, position, x, y){
   /*returns whether and which piece the x, y are on the board 
     e.g. for 200,300 it may return [true, Qe4]*/
-  //{{{
   let color = ""
   for(let piecePosition of position.white){
     let pieceCoordinate = algebraic2cartesian(boardProps, piecePosition)
@@ -133,7 +142,6 @@ function XYOnWhichPieceSquare(boardProps, x, y, position){
     }
   }
   return {value: false}
-  //}}}
 }
 
 function drawRectGame(ctx, boardProps, position, grabbed){
@@ -151,31 +159,34 @@ function setGrabbed(value, selectedPiece = null){
   else{
     grabbed = {value:value}
   }
+
   if(grabbed.value){//grabbed set true from false TODO *pubsub needed here
-    grabbedIsTrue(ctx, boardProps, position, grabbed)
+    grabbedIsTrue(ctx, board, boardProps, position, grabbed)
     lastSelectedPiece = selectedPiece
   }
+
   else{//grabbed set false from true
     clearInterval(loop)
-    grabbedIsFalse(ctx, boardProps,position, grabbed)
+    moveSound.play()
+    grabbedIsFalse(ctx, board, boardProps, position, grabbed)
   }
 }
 
 //listeners
-board.addEventListener('mousedown', e => {
-  let mouseOnPiece = XYOnWhichPieceSquare(boardProps, e.offsetX, e.offsetY, startingPosition)
+boardCanvas.addEventListener('mousedown', e => {
+  let mouseOnPiece = XYOnWhichPieceSquare(boardProps, startingPosition, e.offsetX, e.offsetY)
   if(mouseOnPiece.value){
     setGrabbed(true, mouseOnPiece)
   }
 })
 
-board.addEventListener('mouseup', ()=>{
+boardCanvas.addEventListener('mouseup', ()=>{
   if(grabbed.value){
     setGrabbed(false)
   }
 })
 
-board.addEventListener('mousemove', (e) => {
+boardCanvas.addEventListener('mousemove', (e) => {
   mouseX = e.offsetX
   mouseY = e.offsetY
 })
