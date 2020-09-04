@@ -1,9 +1,10 @@
 //TODO: chess should work even for arima like board
 
-import { drawPieces, algebraic2cartesian} from './pieces.js'
+import {drawPieces, algebraic2cartesian} from './pieces.js'
 import {drawCheckeredBoard, displayFileAndRank, alphabetOrder} from './board.js'
 import {boardProps, piecesProps} from './boardConfig.js'
-import {canMove2, rectBoardSquares} from './rules.js'
+import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor}
+from './rules.js'
 
 document.getElementById("board").style.cursor = "pointer"; //change cursor shape when inside board
 const boardCanvas = document.getElementById("board")
@@ -63,6 +64,22 @@ const createHub = () => {
   return {subscribe, unsubscribe, publish}
 }
 
+function lastPiecePosition2newSquare(lastPiecePosition, newSquare){
+  /*returns the piecePosition using the lastPiecePsition and the newSquare
+  e.g. ('Rh1', 'h5') will return 'Rh5'*/
+
+  //for pawn
+  if(lastPiecePosition.length === 2){
+    return newSquare
+  }
+
+  //for non-pawn pieces
+  else if(lastPiecePosition.length === 3){
+    let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${newSquare}`
+    return newPiecePosition
+  }
+}
+
 function grabbedIsTrue(ctx, board, boardProps, position, grabbed){
   /*draws game when grabbed is set to true*/
   loop = setInterval(()=>{
@@ -80,29 +97,29 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
   position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition)
 
   //check if the piece can move to newSquare
-  if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){
-    //for pawn
-    if(lastSelectedPiece.piecePosition.length === 2){
-      position[lastSelectedPiece.color].push(newSquare)
+  if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){    
+    // if a piece is being captured splice its piecePosition out of position
+    if(isSquareEmptyAllyEnemy(position, newSquare, lastSelectedPiece.color) === "enemy"){//TODO: can be optimized since isSquareEmptyAllyEnemy already iterates over piecePositions
+      let enemyColor = returnEnemyColor(lastSelectedPiece.color)
+      let piecePosition = ""
+      for(piecePosition of position[enemyColor]){
+        let coord = piecePosition.slice(-2,)
+        if(coord === newSquare){
+          break
+        }
+      }
+      let index = position[enemyColor].indexOf(piecePosition)
+      position[enemyColor].splice(index, 1)
     }
-    //for non-pawn pieces
-    else if(lastSelectedPiece.piecePosition.length === 3){
-      let newPiecePosition = `${lastSelectedPiece.piecePosition[0]}${newSquare}`
-      position[lastSelectedPiece.color].push(newPiecePosition)
-    }
+    //splice the previous piecePosition out of the position
     let index = position[lastSelectedPiece.color].indexOf(lastSelectedPiece.piecePosition)
     position[lastSelectedPiece.color].splice(index, 1)
+    //push the new piecePosition of the moved piece into position[white/black]
+    let newPiecePosition = lastPiecePosition2newSquare(lastSelectedPiece.piecePosition, newSquare)
+    position[lastSelectedPiece.color].push(newPiecePosition)
+    moveSound.play()
   }
 
-  else{
-    if(lastSelectedPiece.piecePosition.length === 2){
-      position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition)
-    }
-    //for non-pawn pieces
-    else if(lastSelectedPiece.length === 3){
-      position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition.slice(-2,))
-    }
-  }
   drawRectGame(ctx, boardProps, position, grabbed)
 }
 
@@ -154,7 +171,11 @@ function drawRectGame(ctx, boardProps, position, grabbed){
 
 function setGrabbed(value, selectedPiece = null){
   if(value){
-    grabbed = {value:value, piecePosition: selectedPiece.piecePosition, color: selectedPiece.color}
+    grabbed = {
+      value:value,
+      piecePosition: selectedPiece.piecePosition,
+      color: selectedPiece.color
+    }
   }
   else{
     grabbed = {value:value}
@@ -167,7 +188,7 @@ function setGrabbed(value, selectedPiece = null){
 
   else{//grabbed set false from true
     clearInterval(loop)
-    moveSound.play()
+    // moveSound.play()
     grabbedIsFalse(ctx, board, boardProps, position, grabbed)
   }
 }
@@ -192,4 +213,5 @@ boardCanvas.addEventListener('mousemove', (e) => {
 })
 
 //main
+isBoardAndPositionLegit(board, position)
 drawRectGame(ctx, boardProps, startingPosition, grabbed)

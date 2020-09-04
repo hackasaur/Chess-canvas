@@ -23,6 +23,8 @@
 //[ ] queen
 //[ ] knight
 //[ ] king
+//[ ] add rules for capturing
+//[ ] make a list of moves made
 
 import { alphabetOrder } from './board.js'
 
@@ -54,30 +56,38 @@ function rectBoardSquares(ncol, nrow){
 function isBoardAndPositionLegit(board, position){
   /*checks whether:
    * square in `position` exists on the board
-   * there are duplicate values in the position or board*/
+   * there are duplicate values in the position or boardo
+  throws error if not*/
+  for (let row of board){
+    if((new Set(row).size) !== row.length){
+      throw `${board} has duplicate values`
+    }
+
+  }
+
   let positionAll = position.white.concat(position.black)
+
+  if((new Set(positionAll)).size !== positionAll.length){
+    throw `${position} has duplicate values`
+  }
+
   let legit = false
+  let pieceCoordinate = ""
   for(let piecePosition of positionAll){
-    let pieceCoordinate = (piecePosition.length === 2) ? piecePosition : piecePosition.slice(1,) //since first letter is piece name exception pawns
+    pieceCoordinate = (piecePosition.length === 2) ? piecePosition : piecePosition.slice(1,) //since first letter is piece name exception pawns
 
     legit = false
     let square = ""
     for(let row of board){
-      for(square of row){
-        if(pieceCoordinate === square){
-          legit = true
-          break
-        }
-      }
-      if(legit === true){
+      if(row.includes(pieceCoordinate)){
+        legit = true
         break
       }
     }
-    if(legit === false){
-      throw `isBoardAndPositionLegit:' ${pieceCoordinate}' square doees not exist on the board`
-    }
   }
-  return(legit)
+  if(legit === false){
+    throw `isBoardAndPositionLegit:'${pieceCoordinate}' square in ${position} doees not exist on the board`
+  }
 }
 
 function identifyPiece(position, piecePosition){
@@ -97,119 +107,9 @@ function identifyPiece(position, piecePosition){
   }
 }
 
-function pawnCanMove2(board, position, piecePosition, color){
-  /*returns an array of squares the pawn can move to.
-    e.g. ('e2', 'white', position) might return ['e3']*/
-  let moves = []
-
-  if(color === "white"){
-    //check if pawn can move 1 step forward if there is no piece in front of it
-    let frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) + 1}`
-    let positionAll = position.white.concat(position.black)
-    let occupied = false
-    for(let piecePosition of positionAll){
-      if(piecePosition.slice(-2,) === frontSquare){
-        console.log("there is a piece in front of the pawn")
-        occupied = true
-        break
-      }
-    }
-    if(occupied === false){ 
-      moves.push(frontSquare)
-    }
-    //check if pawn can capture 1 step right diagonally
-    occupied = false
-    let rightFile
-    let letterIndex = alphabetOrder.indexOf(piecePosition[0])
-    rightFile = alphabetOrder[letterIndex+1]
-    let rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) + 1}`
-    for(let piecePosition of position.black){ //check is there a black piece diagonally 1 square to the right of the pawn
-      if(piecePosition.slice(-2,) === rightDiagonalSquare){
-        occupied = true
-        break
-      }
-    }
-    if(occupied === true){
-      moves.push(rightDiagonalSquare)
-    }
-    //check if pawn can capture 1 step left diagonally
-    occupied = false
-    let leftFile
-    letterIndex = alphabetOrder.indexOf(piecePosition[0])
-    leftFile = alphabetOrder[letterIndex-1]
-    let leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) + 1}`
-    for(let piecePosition of position.black){ //i.e there is a black piece diagnolly 1 square to the right of the pawn
-      if(piecePosition.slice(-2,) === leftDiagonalSquare){
-        occupied = true
-        break
-      }
-    }
-    if(occupied === true){
-      moves.push(leftDiagonalSquare)
-    }
-  }
-
-  //black pawn
-  else if(color === "black"){
-    //check if pawn can move 1 step forward if there is no piece in front of it
-    let frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) - 1}`
-    let positionAll = position.white.concat(position.black)
-    let occupied = false
-    for(let piecePosition of positionAll){
-      if(piecePosition.slice(-2,) === frontSquare){
-        console.log("there is a piece in front of the pawn")
-        occupied = true
-        break
-      }
-    }
-
-    if(occupied === false){ 
-      moves.push(frontSquare)
-    }
-    //check if pawn can capture 1 step right diagonally
-    occupied = false
-    let rightFile
-    let letterIndex = alphabetOrder.indexOf(piecePosition[0])
-    rightFile = alphabetOrder[letterIndex+1]
-    let rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) - 1}`
-    for(let piecePosition of position.white){ //check is there a black piece diagonally 1 square to the right of the pawn
-      if(piecePosition.slice(-2,) === rightDiagonalSquare){
-        occupied = true
-        break
-      }
-    }
-    if(occupied === true){
-      moves.push(rightDiagonalSquare)
-    }
-    //check if pawn can capture 1 step left diagonally
-    occupied = false
-    let leftFile
-    letterIndex = alphabetOrder.indexOf(piecePosition[0])
-    leftFile = alphabetOrder[letterIndex-1]
-    let leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) - 1}`
-    for(let piecePosition of position.white){ //i.e there is a black piece diagnolly 1 square to the right of the pawn
-      if(piecePosition.slice(-2,) === leftDiagonalSquare){
-        occupied = true
-        break
-      }
-    }
-    if(occupied === true){
-      moves.push(leftDiagonalSquare)
-    }
-  }
-  return moves
-}
-
 function isSquareEmptyAllyEnemy(position, square, color){
   let occupied = false
-  let enemyColor = ""
-
-  if(color === "white"){
-    enemyColor = "black"
-  }
-  else if(color === "black"){
-    enemyColor = "white"
-  }
+  let enemyColor = returnEnemyColor(color)
 
   for(let piecePosition of position[color]){
     let coord = piecePosition.slice(-2,)
@@ -233,7 +133,17 @@ function isSquareEmptyAllyEnemy(position, square, color){
   if(occupied === true){
     return "enemy"
   }
+
   return "empty"
+}
+
+function returnEnemyColor(color){
+  if(color === "white"){
+    return "black"
+  }
+  else if(color === "black"){
+    return "white"
+  }
 }
 
 function isSquareOnBoard(board, square){
@@ -253,7 +163,60 @@ function isSquareOnBoard(board, square){
   return exists
 }
 
+function pawnCanMove2(board, position, piecePosition, color){
+  /*returns an array of squares the pawn can move to.
+    e.g. ('e2', 'white', position) might return ['e3']*/
+  let moves = []
+  let frontSquare = ""
+
+  if(color === "white"){
+    //check if pawn can move 1 step forward if there is no piece in front of it
+    frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) + 1}`
+  }
+  // in case pawn is black the front square is of lower number
+  else if(color === "black"){
+    frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) - 1}`
+  }
+  let positionAll = position.white.concat(position.black)
+  let emptyAllyEnemy = isSquareEmptyAllyEnemy(position, frontSquare, color)
+  if(emptyAllyEnemy === "empty"){ 
+    moves.push(frontSquare)
+  }
+
+  //check if pawn can capture 1 step right diagonally
+  let letterIndex = alphabetOrder.indexOf(piecePosition[0])
+  let rightFile = alphabetOrder[letterIndex+1]
+  let rightDiagonalSquare = ""
+
+  if(color === "white"){
+    rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) + 1}`
+  }
+  else if(color === "black"){
+    rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) - 1}`
+  }
+  emptyAllyEnemy = isSquareEmptyAllyEnemy(position, rightDiagonalSquare, color)
+  if(emptyAllyEnemy === "enemy"){
+    moves.push(rightDiagonalSquare)
+  } 
+
+  let leftFile = alphabetOrder[letterIndex-1]
+  let leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) + 1}`
+
+  if(color === "white"){
+    leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) + 1}`
+  }
+  else if(color === "black"){
+    leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) - 1}`
+  }
+  emptyAllyEnemy = isSquareEmptyAllyEnemy(position, leftDiagonalSquare, color)
+  if(emptyAllyEnemy === "enemy"){
+    moves.push(leftDiagonalSquare)
+  } 
+  return moves
+}
+
 function rookCanMove2(board, position, pieceCoordinate, color) {
+  /*returns an array of square the rook can move to*/
   let moves = []
   let occupied = false
   let square = ""
@@ -287,9 +250,26 @@ function rookCanMove2(board, position, pieceCoordinate, color) {
       break
     }
   }
+
   //add all squares to 'moves' going down in the column, stop if another piece blocks
   for(let i = parseInt(pieceCoordinate[1]) - 1; ; i--){
     square = `${pieceCoordinate[0]}${i}`
+    if(checkPieceOnSquareAndExists() === false){
+      break
+    }
+  }
+
+  //add all squares to 'moves' going right in the row, stop if another piece blocks
+  for(let i = parseInt(alphabetOrder.indexOf(pieceCoordinate[0])) + 1; ; i++){
+    square = `${alphabetOrder[i]}${pieceCoordinate[1]}`
+    if(checkPieceOnSquareAndExists() === false){
+      break
+    }
+  }
+
+  //add all squares to 'moves' going left in the row, stop if another piece blocks
+  for(let i = parseInt(alphabetOrder.indexOf(pieceCoordinate[0])) - 1; ; i--){
+    square = `${alphabetOrder[i]}${pieceCoordinate[1]}`
     if(checkPieceOnSquareAndExists() === false){
       break
     }
@@ -333,14 +313,4 @@ function canMove2(board, position, piecePosition){
   return moves
 }
 
-// let board = rectBoardSquares(ncol, nrow)
-// console.log(board)
-// let startingPosition = {
-//   white: ['Ke1','Qd1', 'Bf8', 'Re2'],
-//   black: ['Ke8', 'Qd8', 'f7', 'd7']
-// }
-//
-// //console.log(isBoardAndPositionLegit(board, startingPosition))
-// console.log(canMove2(board, startingPosition, 'Re2'))
-
-export{canMove2, rectBoardSquares}
+export{canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor}
