@@ -18,13 +18,14 @@
 
 //TODO:
 //[ ] pawn can move 2 steps on it's 1st move
-//[ ] rook
-//[ ] Bishop
+//[ ] rook castling
 //[ ] queen
 //[ ] knight
 //[ ] king
 //[ ] add rules for capturing
 //[ ] make a list of moves made
+//[x] rook
+//[x] Bishop
 
 import { alphabetOrder } from './board.js'
 
@@ -163,6 +164,30 @@ function isSquareOnBoard(board, square){
   return exists
 }
 
+function checkPieceOnSquareAndExists(board, position, square, color, moves){
+  /*can be used when iterating on squares, a piece can move to. 
+   * returns an object like e.g. {stop : true, push: true, moves: "a4"} */
+  let emptyAllyEnemy = isSquareEmptyAllyEnemy(position, square, color)
+  if(emptyAllyEnemy === "ally"){
+    return true
+  }
+
+  else if(emptyAllyEnemy === "enemy"){
+    moves.push(square)
+    return true
+  }
+  //check whether square exists on the board
+  let exists = isSquareOnBoard(board, square)
+
+  if(exists === true){
+    moves.push(square)
+    return false
+  }
+  else if(exists === false){
+    return true 
+  }
+}
+
 function pawnCanMove2(board, position, piecePosition, color){
   /*returns an array of squares the pawn can move to.
     e.g. ('e2', 'white', position) might return ['e3']*/
@@ -215,38 +240,17 @@ function pawnCanMove2(board, position, piecePosition, color){
   return moves
 }
 
-function rookCanMove2(board, position, pieceCoordinate, color) {
-  /*returns an array of square the rook can move to*/
+function rookCanMove2(board, position, pieceCoordinate, color){
+  /*returns an array of squares the rook can move to*/
+
   let moves = []
-  let occupied = false
   let square = ""
   let enemyColor = ""
-
-  let checkPieceOnSquareAndExists = () => {
-    let emptyAllyEnemy = isSquareEmptyAllyEnemy(position, square, color)
-    if(emptyAllyEnemy === "Ally"){
-      return false
-    }
-
-    else if(emptyAllyEnemy === "enemy"){
-      moves.push(square)
-      return false
-    }
-
-    //check whether square exists on the board
-    let exists = isSquareOnBoard(board, square)
-    if(exists === true){
-      moves.push(square)
-    }
-    else if(exists === false){
-      return false
-    }
-  }
 
   //add all squares to 'moves' going up in the column, stop if another piece blocks
   for(let i = parseInt(pieceCoordinate[1]) + 1; ; i++){
     square = `${pieceCoordinate[0]}${i}`
-    if(checkPieceOnSquareAndExists() === false){
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
       break
     }
   }
@@ -254,31 +258,134 @@ function rookCanMove2(board, position, pieceCoordinate, color) {
   //add all squares to 'moves' going down in the column, stop if another piece blocks
   for(let i = parseInt(pieceCoordinate[1]) - 1; ; i--){
     square = `${pieceCoordinate[0]}${i}`
-    if(checkPieceOnSquareAndExists() === false){
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
       break
     }
   }
 
   //add all squares to 'moves' going right in the row, stop if another piece blocks
-  for(let i = parseInt(alphabetOrder.indexOf(pieceCoordinate[0])) + 1; ; i++){
+  for(let i = alphabetOrder.indexOf(pieceCoordinate[0]) + 1; ; i++){
     square = `${alphabetOrder[i]}${pieceCoordinate[1]}`
-    if(checkPieceOnSquareAndExists() === false){
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
       break
     }
   }
 
   //add all squares to 'moves' going left in the row, stop if another piece blocks
-  for(let i = parseInt(alphabetOrder.indexOf(pieceCoordinate[0])) - 1; ; i--){
+  for(let i = alphabetOrder.indexOf(pieceCoordinate[0]) - 1; ; i--){
     square = `${alphabetOrder[i]}${pieceCoordinate[1]}`
-    if(checkPieceOnSquareAndExists() === false){
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
       break
     }
   }
+
   return moves
 }
 
-function canMove2(board, position, piecePosition){
-  /*returns array of squares to which the piece on specified square can move to*/
+function bishopCanMove2(board, position, pieceCoordinate, color){
+  /*returns an array of squares the bishop can move to*/
+  let moves = []
+  let square = ""
+  let i = 0
+  let j = 0
+  let n = 0
+
+  //add all squares to 'moves' going up-right diagonally
+  for(n=1;;n++){
+    i = alphabetOrder.indexOf(pieceCoordinate[0]) + n
+    j = parseInt(pieceCoordinate[1]) + n;
+    square = `${alphabetOrder[i]}${j}`
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
+      break
+    }
+  }
+
+  //add all squares to 'moves' going down-left diagonally
+  for(n=1;;n++){
+    i = alphabetOrder.indexOf(pieceCoordinate[0]) - n
+    j = parseInt(pieceCoordinate[1]) - n;
+    square = `${alphabetOrder[i]}${j}`
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
+      break
+    }
+  }
+
+  //add all squares to 'moves' going up-left diagonally 
+  for(n=1;;n++){
+    i = alphabetOrder.indexOf(pieceCoordinate[0]) - n
+    j = parseInt(pieceCoordinate[1]) + n;
+    square = `${alphabetOrder[i]}${j}`
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
+      break
+    }
+  }
+
+  //add all squares to 'moves' going down-right diagonally
+  for(n=1;;n++){
+    i = alphabetOrder.indexOf(pieceCoordinate[0]) + n
+    j = parseInt(pieceCoordinate[1]) - n;
+    square = `${alphabetOrder[i]}${j}`
+    if(checkPieceOnSquareAndExists(board, position, square, color, moves)){
+      break
+    }
+  }
+
+  return moves
+}
+
+function queenCanMove2(board, position, pieceCoordinate, color){
+  let moves = []
+
+  moves = rookCanMove2(board, position, pieceCoordinate, color)
+  moves = moves.concat(bishopCanMove2(board, position, pieceCoordinate, color))
+
+  return moves
+}
+
+function kingCanMove2(board, position, pieceCoordinate, color){
+  let moves = []
+  let square = ""
+  let fileIndex = alphabetOrder.indexOf(pieceCoordinate[0])
+  let rank = parseInt(pieceCoordinate[1])
+
+  //the square on the right of the king
+  square = `${alphabetOrder[fileIndex + 1]}${rank}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square on the left of the king
+  square = `${alphabetOrder[fileIndex - 1]}${rank}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square just above the king
+  square = `${alphabetOrder[fileIndex]}${rank + 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+   
+  //the square just below the king
+  square = `${alphabetOrder[fileIndex]}${rank - 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square on top-right of the king
+  square = `${alphabetOrder[fileIndex + 1]}${rank + 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square on top-left of the king
+  square = `${alphabetOrder[fileIndex - 1]}${rank + 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square on bottom-left of the king
+  square = `${alphabetOrder[fileIndex - 1]}${rank - 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //the square on bottom-right of the king
+  square = `${alphabetOrder[fileIndex + 1]}${rank - 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  return moves
+}
+
+function canMove2(board, position, piecePosition, color){
+  /*returns array of squares to which the piece can move to
+    e.g. ([['a1', 'a2',..],['b1', 'b2',...],...],['Qd2', 'Ke1'...], 'Ke1', 'white') may return ['e2', 'f1','f2'...]*/
   let moves = []
   let pieceType = ""
   let pieceCoordinate = piecePosition.slice(-2,)
@@ -309,6 +416,32 @@ function canMove2(board, position, piecePosition){
   //black rook
   else if(pieceType === 'bR'){
     moves = rookCanMove2(board, position, pieceCoordinate, "black")
+  }
+ 
+  //for bishop
+  //white bishop
+  else if(pieceType === 'wB'){
+    moves = bishopCanMove2(board, position, pieceCoordinate, "white")
+  }
+  //black bishop
+  else if(pieceType === 'bB'){
+    moves = bishopCanMove2(board, position, pieceCoordinate, "black")
+  }
+
+  else if(pieceType === 'wQ'){
+    moves = queenCanMove2(board, position, pieceCoordinate, "white")
+  }
+
+  else if(pieceType === 'bQ'){
+    moves = queenCanMove2(board, position, pieceCoordinate, "black")
+  }
+
+  else if(pieceType === 'wK'){
+    moves = kingCanMove2(board, position, pieceCoordinate, "white")
+  }
+
+  else if(pieceType === 'bK'){
+    moves = kingCanMove2(board, position, pieceCoordinate, "black")
   }
   return moves
 }
