@@ -3,8 +3,7 @@
 import {drawPieces, algebraic2cartesian} from './pieces.js'
 import {drawCheckeredBoard, displayFileAndRank, alphabetOrder} from './board.js'
 import {boardProps, piecesProps} from './boardConfig.js'
-import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor}
-from './rules.js'
+import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor} from './rules.js'
 
 document.getElementById("board").style.cursor = "pointer"; //change cursor shape when inside board
 const boardCanvas = document.getElementById("board")
@@ -13,7 +12,10 @@ const ctx = boardCanvas.getContext("2d")
 //ctx.canvas.height = window.innerHeight
 //sounds
 const moveSound = new Audio()
+const captureSound = new Audio()
 moveSound.src = './sounds/Lichess/standard/Move.mp3'
+captureSound.src = './sounds/Lichess/standard/Capture.mp3'
+
 
 //mouse
 let mouseX = 0
@@ -98,6 +100,7 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
 
   //check if the piece can move to newSquare
   if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){    
+    let capturing = false
     // if a piece is being captured splice its piecePosition out of position
     if(isSquareEmptyAllyEnemy(position, newSquare, lastSelectedPiece.color) === "enemy"){//TODO: can be optimized since isSquareEmptyAllyEnemy already iterates over piecePositions
       let enemyColor = returnEnemyColor(lastSelectedPiece.color)
@@ -110,6 +113,8 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
       }
       let index = position[enemyColor].indexOf(piecePosition)
       position[enemyColor].splice(index, 1)
+      captureSound.play()
+      capturing = true
     }
     //splice the previous piecePosition out of the position
     let index = position[lastSelectedPiece.color].indexOf(lastSelectedPiece.piecePosition)
@@ -117,7 +122,9 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
     //push the new piecePosition of the moved piece into position[white/black]
     let newPiecePosition = lastPiecePosition2newSquare(lastSelectedPiece.piecePosition, newSquare)
     position[lastSelectedPiece.color].push(newPiecePosition)
-    moveSound.play()
+    if(!capturing){
+      moveSound.play()
+    }
   }
 
   drawRectGame(ctx, boardProps, position, grabbed)
