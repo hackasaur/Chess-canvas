@@ -1,31 +1,33 @@
 // Rules of chess:
-// PAWN: can move one square forward(if there is no piece already on the square)
-// can move 1 square diagonally only if there is a piece to capture and can be 
-// promoted* on the opposite last rank
-// also can move 2 squares forward on 1st move also enpassant*.
-// KING: can move 1 square in any direction unless that square is being attacked.
-// can castle*
-// It is checkmate if king is under attack and there is no square to move to.
-// BISHOP: can move and capture enemy pieces anywhere diagonally unless a piece is
-// in the way
-// ROOK: can move anywhere vertically or horizontally unless there is a piece in
-// the way. Can castle*
-// QUEEN: can move diagnolly, vertically, horizontally to any square unless
-// a piece is blocking it.
-// KNIGHT: can move to squares that are horizontally or vertically 2 squares away
-// and 1 square adjacent to that square.
-//disambiguation moves
+  // PAWN: can move one square forward(if there is no piece already on the square)
+  // can move 1 square diagonally only if there is a piece to capture and can be 
+  // promoted* on the opposite last rank
+  // also can move 2 squares forward on 1st move also enpassant*.
+  // KING: can move 1 square in any direction unless that square is being attacked.
+  // can castle*
+  // It is checkmate if king is under attack and there is no square to move to.
+  // BISHOP: can move and capture enemy pieces anywhere diagonally unless a piece is
+  // in the way
+  // ROOK: can move anywhere vertically or horizontally unless there is a piece in
+  // the way. Can castle*
+  // QUEEN: can move diagnolly, vertically, horizontally to any square unless
+  // a piece is blocking it.
+  // KNIGHT: can move to squares that are horizontally or vertically 2 squares away
+  // and 1 square adjacent to that square.
+  //disambiguation moves
 
 //TODO:
-//[ ] pawn can move 2 steps on it's 1st move
-//[ ] rook castling
-//[ ] queen
-//[ ] knight
-//[ ] king
-//[ ] add rules for capturing
-//[ ] make a list of moves made
-//[x] rook
-//[x] Bishop
+  //[ ] pawn can move 2 steps on it's 1st move
+  //[ ] rook-king castling
+  //[ ] alternate turns of black and white
+  //[ ] pawn promotion
+  //[ ] knight
+  //[ ] add rules for capturing(also king)
+  //[ ] make a list of moves made
+  //[x] king
+  //[x] queen
+  //[x] rook
+  //[x] Bishop
 
 import { alphabetOrder } from './board.js'
 
@@ -191,21 +193,38 @@ function checkPieceOnSquareAndExists(board, position, square, color, moves){
 function pawnCanMove2(board, position, piecePosition, color){
   /*returns an array of squares the pawn can move to.
     e.g. ('e2', 'white', position) might return ['e3']*/
+
   let moves = []
   let frontSquare = ""
+  let firstMove = false
+  let frontSecondSquare = ""
 
   if(color === "white"){
-    //check if pawn can move 1 step forward if there is no piece in front of it
     frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) + 1}`
+    if(piecePosition[1] === '2'){
+      firstMove = true
+      frontSecondSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) + 2}`
+    }
+    //check if pawn can move 1 step forward if there is no piece in front of it
   }
-  // in case pawn is black the front square is of lower number
+
+  // when pawn is black the front square is of lower number
   else if(color === "black"){
     frontSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) - 1}`
+    if(piecePosition[1] === '7'){
+      firstMove = true
+      frontSecondSquare = `${piecePosition[0]}${parseInt(piecePosition[1]) - 2}`
+    }
   }
-  let positionAll = position.white.concat(position.black)
-  let emptyAllyEnemy = isSquareEmptyAllyEnemy(position, frontSquare, color)
-  if(emptyAllyEnemy === "empty"){ 
+
+  // let positionAll = position.white.concat(position.black)
+  if(isSquareEmptyAllyEnemy(position, frontSquare, color) === "empty"){
     moves.push(frontSquare)
+    if(firstMove === true){
+      if(isSquareEmptyAllyEnemy(position, frontSecondSquare, color) === "empty"){
+        moves.push(frontSecondSquare)
+      }
+    }
   }
 
   //check if pawn can capture 1 step right diagonally
@@ -219,8 +238,7 @@ function pawnCanMove2(board, position, piecePosition, color){
   else if(color === "black"){
     rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) - 1}`
   }
-  emptyAllyEnemy = isSquareEmptyAllyEnemy(position, rightDiagonalSquare, color)
-  if(emptyAllyEnemy === "enemy"){
+    if(isSquareEmptyAllyEnemy(position, rightDiagonalSquare, color) === "enemy"){
     moves.push(rightDiagonalSquare)
   } 
 
@@ -233,10 +251,10 @@ function pawnCanMove2(board, position, piecePosition, color){
   else if(color === "black"){
     leftDiagonalSquare = `${leftFile}${parseInt(piecePosition[1]) - 1}`
   }
-  emptyAllyEnemy = isSquareEmptyAllyEnemy(position, leftDiagonalSquare, color)
-  if(emptyAllyEnemy === "enemy"){
+  if(isSquareEmptyAllyEnemy(position, leftDiagonalSquare, color) === "enemy"){
     moves.push(leftDiagonalSquare)
-  } 
+  }
+
   return moves
 }
 
@@ -334,6 +352,8 @@ function bishopCanMove2(board, position, pieceCoordinate, color){
 }
 
 function queenCanMove2(board, position, pieceCoordinate, color){
+  /*returns an array of squares the queen can move to*/
+
   let moves = []
 
   moves = rookCanMove2(board, position, pieceCoordinate, color)
@@ -343,6 +363,8 @@ function queenCanMove2(board, position, pieceCoordinate, color){
 }
 
 function kingCanMove2(board, position, pieceCoordinate, color){
+  /*returns an array of squares the king can move to*/
+
   let moves = []
   let square = ""
   let fileIndex = alphabetOrder.indexOf(pieceCoordinate[0])
@@ -383,6 +405,53 @@ function kingCanMove2(board, position, pieceCoordinate, color){
   return moves
 }
 
+function knightCanMove2(board, position, pieceCoordinate, color){
+  /*returns an array of squares the knight can move to*/
+
+  let moves=[]
+  let square = ""
+  let fileIndex = alphabetOrder.indexOf(pieceCoordinate[0])
+  let row = parseInt(pieceCoordinate[1])
+
+  //2 squares above
+  let shiftedRow = row + 2
+  //and the square to the right
+  square = `${alphabetOrder[fileIndex + 1]}${shiftedRow}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+  //and the square to the left
+  square= `${alphabetOrder[fileIndex - 1]}${shiftedRow}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //2 squares below
+  shiftedRow = row - 2
+  //and the square to the right
+  square = `${alphabetOrder[fileIndex + 1]}${shiftedRow}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+  //and the square to the left
+  square= `${alphabetOrder[fileIndex - 1]}${shiftedRow}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //2 squares to the right
+  let shiftedFileIndex = fileIndex + 2
+  //and the square above
+  square = `${alphabetOrder[shiftedFileIndex]}${row + 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+  //and the square below
+  square= `${alphabetOrder[shiftedFileIndex]}${row - 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  //2 squares to the left
+  shiftedFileIndex = fileIndex - 2
+  //and the square above
+  square = `${alphabetOrder[shiftedFileIndex]}${row + 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+  //and the square below
+  square= `${alphabetOrder[shiftedFileIndex]}${row - 1}`
+  checkPieceOnSquareAndExists(board, position, square, color, moves)
+
+  return moves
+}
+
 function canMove2(board, position, piecePosition, color){
   /*returns array of squares to which the piece can move to
     e.g. ([['a1', 'a2',..],['b1', 'b2',...],...],['Qd2', 'Ke1'...], 'Ke1', 'white') may return ['e2', 'f1','f2'...]*/
@@ -407,17 +476,6 @@ function canMove2(board, position, piecePosition, color){
     moves = pawnCanMove2(board, position, piecePosition, "black")
   }
 
-  //for rook
-  //white rook
-  else if(pieceType === 'wR'){
-    moves = rookCanMove2(board, position, pieceCoordinate, "white")
-  }
-
-  //black rook
-  else if(pieceType === 'bR'){
-    moves = rookCanMove2(board, position, pieceCoordinate, "black")
-  }
- 
   //for bishop
   //white bishop
   else if(pieceType === 'wB'){
@@ -428,18 +486,43 @@ function canMove2(board, position, piecePosition, color){
     moves = bishopCanMove2(board, position, pieceCoordinate, "black")
   }
 
+  //for knight
+  //white knight
+  else if(pieceType === 'wN'){
+    moves = knightCanMove2(board, position, pieceCoordinate, "white")
+  }
+  //black knight
+  else if(pieceType === 'bN'){
+    moves = knightCanMove2(board, position, pieceCoordinate, "black")
+  }
+
+  //for rook
+  //white rook
+  else if(pieceType === 'wR'){
+    moves = rookCanMove2(board, position, pieceCoordinate, "white")
+  }
+
+  //black rook
+  else if(pieceType === 'bR'){
+    moves = rookCanMove2(board, position, pieceCoordinate, "black")
+  }
+
+  //for Queen
+  //white queen
   else if(pieceType === 'wQ'){
     moves = queenCanMove2(board, position, pieceCoordinate, "white")
   }
-
+  //black queen
   else if(pieceType === 'bQ'){
     moves = queenCanMove2(board, position, pieceCoordinate, "black")
   }
 
+  //for King
+  //white king
   else if(pieceType === 'wK'){
     moves = kingCanMove2(board, position, pieceCoordinate, "white")
   }
-
+  //black king
   else if(pieceType === 'bK'){
     moves = kingCanMove2(board, position, pieceCoordinate, "black")
   }
