@@ -16,7 +16,6 @@ const captureSound = new Audio()
 moveSound.src = './sounds/Lichess/standard/Move.mp3'
 captureSound.src = './sounds/Lichess/standard/Capture.mp3'
 
-
 //mouse
 let mouseX = 0
 let mouseY = 0
