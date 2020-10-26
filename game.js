@@ -1,8 +1,8 @@
-//TODO: chess should work even for arima like board
+//NOTE: chess should work even for arima like board
 
 import {drawPieces, algebraic2cartesian} from './pieces.js'
 import {drawCheckeredBoard, displayFileAndRank, alphabetOrder} from './board.js'
-import {boardProps, piecesProps} from './boardConfig.js'
+import {boardProps} from './boardConfig.js'
 import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor} from './rules.js'
 
 document.getElementById("board").style.cursor = "pointer"; //change cursor shape when inside board
@@ -21,52 +21,53 @@ let mouseX = 0
 let mouseY = 0
 
 //game variables
-let grabbed = {
-  value: false, 
-  piecePosition:[],
-  color: ""
-}
+let grabbed = {value: false, piecePosition: [], color: ""}
 let loop
 let board = rectBoardSquares(boardProps.cols, boardProps.rows)
 let startingPosition = {
   white: ['Ke1','Qd1','Ra1','Rh1','Nb1','Ng1','Bc1','Bf1','a2','b2','c2','d2','e2','f2','g2','h2'],
   black: ['Ke8','Qd8','Ra8','Rh8','Nb8','Ng8','Bc8','Bf8','a7','b7','c7','d7','e7','f7','g7','h7']
 }
+let movesHistory = {
+  white: [], 
+  black: []
+}
 let position = startingPosition
 let lastSelectedPiece = {}
+let turnSide = 'white'
 
 //pubSub
-const createHub = () => {
-  const events = {
-  }
-
-  const subscribe = (eventName, fn) => {
-    events[eventName] = events[eventName] || []
-    events[eventName].push(fn)
-  }
-
-  const unsubscribe = (eventName, fn) => {
-    if(events[eventName]){
-      for(let i=0; i<events[eventName].length; i++){
-        if(events[eventName][i] === fn){
-          events[eventName].splice(i,1)
-        }
-      }
-    }
-  }
-
-  const publish = (eventName, data) => {
-    if(events[eventName]){
-      events[eventName].forEach((fn) => {
-        fn(data)
-      })
-    }
-  }
-  return {subscribe, unsubscribe, publish}
-}
+// const createHub = () => {
+  // const events = {
+  // }
+  //
+  // const subscribe = (eventName, fn) => {
+  //   events[eventName] = events[eventName] || []
+  //   events[eventName].push(fn)
+  // }
+  //
+  // const unsubscribe = (eventName, fn) => {
+  //   if(events[eventName]){
+  //     for(let i=0; i<events[eventName].length; i++){
+  //       if(events[eventName][i] === fn){
+  //         events[eventName].splice(i,1)
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // const publish = (eventName, data) => {
+  //   if(events[eventName]){
+  //     events[eventName].forEach((fn) => {
+  //       fn(data)
+  //     })
+  //   }
+  // }
+  // return {subscribe, unsubscribe, publish}
+// }
 
 function lastPiecePosition2newSquare(lastPiecePosition, newSquare){
-  /*returns the piecePosition using the lastPiecePsition and the newSquare
+  /*returns the piecePosition using the lastPiecePosition and the newSquare
   e.g. ('Rh1', 'h5') will return 'Rh5'*/
 
   //for pawn
@@ -98,7 +99,7 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
   position[lastSelectedPiece.color].push(lastSelectedPiece.piecePosition)
 
   //check if the piece can move to newSquare
-  if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){    
+  if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){
     let capturing = false
     // if a piece is being captured splice its piecePosition out of position
     if(isSquareEmptyAllyEnemy(position, newSquare, lastSelectedPiece.color) === "enemy"){//TODO: can be optimized since isSquareEmptyAllyEnemy already iterates over piecePositions
@@ -124,13 +125,15 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
     if(!capturing){
       moveSound.play()
     }
+    //set turnSide to the other side's color for the next turn
+    turnSide = returnEnemyColor(turnSide)
   }
 
   drawRectGame(ctx, boardProps, position, grabbed)
 }
 
 function whichSquareFromCoordinates(boardProps, x, y){
-  //returns the file and rank of the nearest square from the given coordinates 
+  //returns the file and rank of the square from the given mouse coordinates
   //e.g 200, 300 it may return {file: 'b', rank : 4}
   let squareSize = boardProps.squareSize
   let originX = boardProps.originX
@@ -148,7 +151,7 @@ function whichSquareFromCoordinates(boardProps, x, y){
 
 function XYOnWhichPieceSquare(boardProps, position, x, y){
   /*returns whether and which piece the x, y are on the board 
-    e.g. for 200,300 it may return [true, Qe4]*/
+    e.g. for 200,300 it may return [value: true, color: "white", piecePosition: Qe4]*/
   let color = ""
   for(let piecePosition of position.white){
     let pieceCoordinate = algebraic2cartesian(boardProps, piecePosition)
@@ -202,7 +205,8 @@ function setGrabbed(value, selectedPiece = null){
 //listeners
 boardCanvas.addEventListener('mousedown', e => {
   let mouseOnPiece = XYOnWhichPieceSquare(boardProps, startingPosition, e.offsetX, e.offsetY)
-  if(mouseOnPiece.value){
+  //setGrabbed to true only if cursor clicked on a piece AND it is the turn of that piece
+  if(mouseOnPiece.value && mouseOnPiece.color === turnSide){
     setGrabbed(true, mouseOnPiece)
   }
 })

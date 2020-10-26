@@ -6,7 +6,7 @@ let boardProps = {
   originY: 0,
   lightColor: "#f8f2ec",
   darkColor: "#739900",
-  font: "Arial",
+  font: "Consolas",
   fontColor: "#000000",
   fontSize: 14,
   padding: 3

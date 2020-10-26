@@ -4,10 +4,11 @@ Building a chess game from scratch in Javascript.
 ### TODO:
 - [ ] make AI to play chess with
 - [ ] board should be flipable
-- [ ] turns should alternate for white and black
+- [x] turns should alternate for white and black
 - [ ] add rules for placing a piece
 - [ ] fix when cursor goes out of canvas while dragging piece
 - [ ] fix have to reload to render chess board
+- [ ] fix canvas dimensions should have single source in html and boardConfig
 - [ ] rook-king castling
 - [ ] pawn promotion
 - [ ] add rules for capturing(exception king)

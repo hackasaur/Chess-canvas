@@ -17,28 +17,21 @@
   //disambiguation moves
 
 //TODO:
-  //[ ] pawn can move 2 steps on it's 1st move
   //[ ] rook-king castling
   //[ ] alternate turns of black and white
   //[ ] pawn promotion
-  //[ ] knight
   //[ ] add rules for capturing(also king)
+  //[ ] add rules for en passant
   //[ ] make a list of moves made
-  //[x] king
+  //[x] knight
+  //[x] pawn can move 2 steps on it's 1st move
+  //[ ] king
   //[x] queen
   //[x] rook
-  //[x] Bishop
+  //[x] bishop
+  //[ ] pawn
 
 import { alphabetOrder } from './board.js'
-
-let pieceLettersName  = {
-  'K' : 'King',
-  'Q' : 'Queen',
-  'R' : 'Rook',
-  'B' : 'Bishop',
-  'N' : 'Knight',
-  'P' : 'Pawn'
-}
 
 function rectBoardSquares(ncol, nrow){
   /*returns an array containing all the coordinates of the board*/
@@ -80,7 +73,6 @@ function isBoardAndPositionLegit(board, position){
     pieceCoordinate = (piecePosition.length === 2) ? piecePosition : piecePosition.slice(1,) //since first letter is piece name exception pawns
 
     legit = false
-    let square = ""
     for(let row of board){
       if(row.includes(pieceCoordinate)){
         legit = true
@@ -96,21 +88,25 @@ function isBoardAndPositionLegit(board, position){
 function identifyPiece(position, piecePosition){
   /*indentifies piece from piecePosition and position then returns pieceType
   e.g. (Ke1, {white: ['Ke1',...], black: [...]}) will return "wK"*/
-
+  let piece = {pieceLetter:'', color:''}
   let pieceLetter = ""
   pieceLetter = piecePosition.length === 2 ? 'P' : piecePosition[0]
+  piece.pieceLetter = pieceLetter
   if(position.white.includes(piecePosition)){
-    return `w${pieceLetter}`
+    piece.color = "white"
   }
   else if(position.black.includes(piecePosition)){
-    return `b${pieceLetter}`
+    piece.color = "black"
   }
   else{
     throw `${piecePosition} piece was not found in the position`
   }
+  return piece
 }
 
 function isSquareEmptyAllyEnemy(position, square, color){
+  /*checks whether square is occupied by an enemy or ally piece or is empty
+    e.g. for a positon(position of the board), square(that needs to be checked), color(color of ally) returns string "ally", "enemy", "empty"*/
   let occupied = false
   let enemyColor = returnEnemyColor(color)
 
@@ -167,8 +163,9 @@ function isSquareOnBoard(board, square){
 }
 
 function checkPieceOnSquareAndExists(board, position, square, color, moves){
-  /*can be used when iterating on squares, a piece can move to. 
-   * returns an object like e.g. {stop : true, push: true, moves: "a4"} */
+  /*adds squares to given moves array if square is not occupied by ally and square exists.
+   returns true if there is something on the square or square doesn't exist can be used 
+   to end the loop*/
   let emptyAllyEnemy = isSquareEmptyAllyEnemy(position, square, color)
   if(emptyAllyEnemy === "ally"){
     return true
@@ -238,7 +235,7 @@ function pawnCanMove2(board, position, piecePosition, color){
   else if(color === "black"){
     rightDiagonalSquare = `${rightFile}${parseInt(piecePosition[1]) - 1}`
   }
-    if(isSquareEmptyAllyEnemy(position, rightDiagonalSquare, color) === "enemy"){
+  if(isSquareEmptyAllyEnemy(position, rightDiagonalSquare, color) === "enemy"){
     moves.push(rightDiagonalSquare)
   } 
 
@@ -260,10 +257,8 @@ function pawnCanMove2(board, position, piecePosition, color){
 
 function rookCanMove2(board, position, pieceCoordinate, color){
   /*returns an array of squares the rook can move to*/
-
   let moves = []
   let square = ""
-  let enemyColor = ""
 
   //add all squares to 'moves' going up in the column, stop if another piece blocks
   for(let i = parseInt(pieceCoordinate[1]) + 1; ; i++){
@@ -381,7 +376,7 @@ function kingCanMove2(board, position, pieceCoordinate, color){
   //the square just above the king
   square = `${alphabetOrder[fileIndex]}${rank + 1}`
   checkPieceOnSquareAndExists(board, position, square, color, moves)
-   
+
   //the square just below the king
   square = `${alphabetOrder[fileIndex]}${rank - 1}`
   checkPieceOnSquareAndExists(board, position, square, color, moves)
@@ -452,7 +447,7 @@ function knightCanMove2(board, position, pieceCoordinate, color){
   return moves
 }
 
-function canMove2(board, position, piecePosition, color){
+function canMove2(board, position, piecePosition){
   /*returns array of squares to which the piece can move to
     e.g. ([['a1', 'a2',..],['b1', 'b2',...],...],['Qd2', 'Ke1'...], 'Ke1', 'white') may return ['e2', 'f1','f2'...]*/
   let moves = []
@@ -460,73 +455,49 @@ function canMove2(board, position, piecePosition, color){
   let pieceCoordinate = piecePosition.slice(-2,)
 
   pieceType = identifyPiece(position, piecePosition)
-  if(typeof(pieceType) === 'undefined'){
+  if(typeof(pieceType) === undefined){
     console.log('canMove2: pieceType is not defined')
     return
   }
 
   //for pawn
-  //white pawn
-  if(pieceType === 'wP'){
-    moves = pawnCanMove2(board, position, piecePosition, "white")
-  }
-
-  //black pawn
-  else if(pieceType === "bP"){
-    moves = pawnCanMove2(board, position, piecePosition, "black")
+  if(pieceType.pieceLetter === 'P'){
+    moves = pawnCanMove2(board, position, piecePosition, pieceType.color)
   }
 
   //for bishop
-  //white bishop
-  else if(pieceType === 'wB'){
-    moves = bishopCanMove2(board, position, pieceCoordinate, "white")
-  }
-  //black bishop
-  else if(pieceType === 'bB'){
-    moves = bishopCanMove2(board, position, pieceCoordinate, "black")
+  else if(pieceType.pieceLetter === 'B'){
+    moves = bishopCanMove2(board, position, pieceCoordinate, pieceType.color) 
   }
 
   //for knight
-  //white knight
-  else if(pieceType === 'wN'){
-    moves = knightCanMove2(board, position, pieceCoordinate, "white")
-  }
-  //black knight
-  else if(pieceType === 'bN'){
-    moves = knightCanMove2(board, position, pieceCoordinate, "black")
+  else if(pieceType === 'N'){
+    moves = knightCanMove2(board, position, pieceCoordinate, pieceType.color )
   }
 
   //for rook
-  //white rook
-  else if(pieceType === 'wR'){
-    moves = rookCanMove2(board, position, pieceCoordinate, "white")
-  }
-
-  //black rook
-  else if(pieceType === 'bR'){
-    moves = rookCanMove2(board, position, pieceCoordinate, "black")
+  else if(pieceType === 'R'){
+    moves = rookCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
 
   //for Queen
-  //white queen
-  else if(pieceType === 'wQ'){
-    moves = queenCanMove2(board, position, pieceCoordinate, "white")
-  }
-  //black queen
-  else if(pieceType === 'bQ'){
-    moves = queenCanMove2(board, position, pieceCoordinate, "black")
+  else if(pieceType === 'Q'){
+    moves = queenCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
 
   //for King
-  //white king
-  else if(pieceType === 'wK'){
-    moves = kingCanMove2(board, position, pieceCoordinate, "white")
-  }
-  //black king
-  else if(pieceType === 'bK'){
-    moves = kingCanMove2(board, position, pieceCoordinate, "black")
+  else if(pieceType === 'K'){
+    moves = kingCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
   return moves
 }
 
+// function moveNotation(position, lastPiecePosition, newPiecePosition, capture){
+//   if(capture){
+//     if(newPiecePosition.length === 2){}
+//   }
+//   else if(!capture){
+//     return
+//   }
+// }
 export{canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor}

@@ -11,7 +11,7 @@
 //pieceCoordinate is only the square e.g e1
 //position is an object like {white : ['Ke1', 'Qd1'], black : ['Ke8', 'Qd8']}
 
-import {piecesProps, boardProps} from './boardConfig.js'
+import {piecesProps} from './boardConfig.js'
 import {alphabetOrder} from './board.js'
 
 //images of pieces

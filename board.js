@@ -6,7 +6,6 @@ import {boardProps} from './boardConfig.js'
 let alphabetOrder = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
 function drawCheckeredBoard(ctx, boardProps) {
-
   for (let j = 0; j < boardProps.rows; j++)
     for (let i = 0; i < boardProps.cols; i++) {
       if ((i % 2 == 0 && j % 2 == 0) || (i % 2 != 0 && j % 2 != 0))
