@@ -3,7 +3,7 @@
 import {drawPieces, algebraic2cartesian} from './pieces.js'
 import {drawCheckeredBoard, displayFileAndRank, alphabetOrder} from './board.js'
 import {boardProps} from './boardConfig.js'
-import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor} from './rules.js'
+import {canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor, addMoveNotation} from './rules.js'
 
 document.getElementById("board").style.cursor = "pointer"; //change cursor shape when inside board
 const boardCanvas = document.getElementById("board")
@@ -29,7 +29,7 @@ let startingPosition = {
   black: ['Ke8','Qd8','Ra8','Rh8','Nb8','Ng8','Bc8','Bf8','a7','b7','c7','d7','e7','f7','g7','h7']
 }
 let movesHistory = {
-  white: [], 
+  white: [],
   black: []
 }
 let position = startingPosition
@@ -102,7 +102,8 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
   if(canMove2(board, position, lastSelectedPiece.piecePosition).includes(newSquare)){
     let capturing = false
     // if a piece is being captured splice its piecePosition out of position
-    if(isSquareEmptyAllyEnemy(position, newSquare, lastSelectedPiece.color) === "enemy"){//TODO: can be optimized since isSquareEmptyAllyEnemy already iterates over piecePositions
+    if(isSquareEmptyAllyEnemy(position, newSquare, lastSelectedPiece.color) === "enemy"){
+      //TODO: can be optimized since isSquareEmptyAllyEnemy already iterates over piecePositions
       let enemyColor = returnEnemyColor(lastSelectedPiece.color)
       let piecePosition = ""
       for(piecePosition of position[enemyColor]){
@@ -122,6 +123,8 @@ function grabbedIsFalse(ctx, board, boardProps, position, grabbed){
     //push the new piecePosition of the moved piece into position[white/black]
     let newPiecePosition = lastPiecePosition2newSquare(lastSelectedPiece.piecePosition, newSquare)
     position[lastSelectedPiece.color].push(newPiecePosition)
+    addMoveNotation(position, lastSelectedPiece.piecePosition, newPiecePosition, capturing, movesHistory)
+    console.log(movesHistory)
     if(!capturing){
       moveSound.play()
     }

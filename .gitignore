@@ -1,6 +1,2 @@
-node_modules/
-package-lock.json
-package.json
-test.js
-.eslintrc.json
-.eslintrc.js
+node_modules
+useless/

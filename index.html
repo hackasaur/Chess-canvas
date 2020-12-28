@@ -1,6 +1,12 @@
 <!doctype html>
 <html>
   <link rel="shortcut icon" href="#">
-  <canvas id = 'board' width=800 height=800 style = "border:3px solid #000000; margin-right: auto; margin-left: auto; display:block"></canvas>
+  <link rel="stylesheet" type="text/css" href="./styles.css">
+  <div id="boardDiv" class="game-layout-centered">
+  <canvas id = "board" width="800" height="800" style = "border:3px solid #000000; margin-right: auto; margin-left: auto; display:block"></canvas>
+  </div>
+  <div id="movesTableDiv" class="game-layout-right">
+  <table id = "movesTable"><tr><td>white</td><td>black</td></tr></table>
+  </div>
   <script type = "module" src = "./game.js"></script>
 </html>

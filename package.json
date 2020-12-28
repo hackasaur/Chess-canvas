@@ -1,0 +1,28 @@
+{
+  "name": "chess-canvas",
+  "version": "1.0.0",
+  "description": "chess game made in JavaScript from scratch",
+  "main": "game.js",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.7.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hackasaur/Chess-canvas.git"
+  },
+  "keywords": [
+    "chess",
+    "canvas",
+    "JavaScript"
+  ],
+  "author": "Manik Raina",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hackasaur/Chess-canvas/issues"
+  },
+  "homepage": "https://github.com/hackasaur/Chess-canvas#readme"
+}

@@ -50,9 +50,8 @@ function rectBoardSquares(ncol, nrow){
 }
 
 function isBoardAndPositionLegit(board, position){
-  /*checks whether:
-   * square in `position` exists on the board
-   * there are duplicate values in the position or boardo
+  /*checks whether: square in `position` exists on the board
+   and if there are duplicate values in the position or board
   throws error if not*/
   for (let row of board){
     if((new Set(row).size) !== row.length){
@@ -396,7 +395,6 @@ function kingCanMove2(board, position, pieceCoordinate, color){
   //the square on bottom-right of the king
   square = `${alphabetOrder[fileIndex + 1]}${rank - 1}`
   checkPieceOnSquareAndExists(board, position, square, color, moves)
-
   return moves
 }
 
@@ -471,33 +469,43 @@ function canMove2(board, position, piecePosition){
   }
 
   //for knight
-  else if(pieceType === 'N'){
+  else if(pieceType.pieceLetter === 'N'){
     moves = knightCanMove2(board, position, pieceCoordinate, pieceType.color )
   }
 
   //for rook
-  else if(pieceType === 'R'){
+  else if(pieceType.pieceLetter === 'R'){
     moves = rookCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
 
   //for Queen
-  else if(pieceType === 'Q'){
+  else if(pieceType.pieceLetter === 'Q'){
     moves = queenCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
 
   //for King
-  else if(pieceType === 'K'){
+  else if(pieceType.pieceLetter === 'K'){
     moves = kingCanMove2(board, position, pieceCoordinate, pieceType.color)
   }
   return moves
 }
 
-// function moveNotation(position, lastPiecePosition, newPiecePosition, capture){
-//   if(capture){
-//     if(newPiecePosition.length === 2){}
-//   }
-//   else if(!capture){
-//     return
-//   }
-// }
-export{canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor}
+function addMoveNotation(newPosition, lastPiecePosition, newPiecePosition, capturing, movesHistory){
+  let pieceType = identifyPiece(newPosition, newPiecePosition)
+  if(capturing){
+    if(pieceType.pieceLetter === 'P'){
+      movesHistory[pieceType.color].push(`${lastPiecePosition[0]}x${newPiecePosition}`)
+      return
+    }
+    else{
+      movesHistory[pieceType.color].push(`${newPiecePosition[0]}x${newPiecePosition.slice(1,)}`)
+      return
+    }
+  }
+  else{
+    movesHistory[pieceType.color].push(newPiecePosition)
+    return
+  }
+}
+
+export{canMove2, rectBoardSquares, isBoardAndPositionLegit, isSquareEmptyAllyEnemy, returnEnemyColor, addMoveNotation}
